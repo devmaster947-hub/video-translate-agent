@@ -2,6 +2,7 @@
 name: video-translate-agent
 slug: video-translate-agent
 version: 2.3.3
+license: GPL-3.0-only
 displayName: 视频翻译与配音助手
 summary: 本地识别口播、清理原字幕，完成翻译、配音、音画对齐与硬字幕输出。
 tags:

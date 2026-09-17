@@ -10,9 +10,9 @@ import tempfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parent.parent
-FILES = ('SKILL.md', 'README.md', 'LICENSE', 'THIRD_PARTY_NOTICES.md',
-         'pyproject.toml', '.env.example', 'install.ps1', 'install.sh',
-         'video_translate/vendor/sttn/LICENSE')
+FILES = ('SKILL.md', 'README.md', 'LICENSE.md', 'THIRD_PARTY_NOTICES.md',
+         'pyproject.toml', 'install.ps1', 'install.sh',
+         'video_translate/vendor/sttn/LICENSE.md')
 TREES = {'scripts': {'.py'}, 'video_translate': {'.py'}, 'agents': {'.yaml'},
          'config': {'.yaml', '.json'}, 'docs': {'.md'}, 'tests': {'.py'}}
 FORBIDDEN = {'jobs', 'output', '.venv', '__pycache__', '.pytest_cache', '.git',
