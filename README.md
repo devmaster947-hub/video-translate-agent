@@ -1,6 +1,6 @@
 # video-translate-agent
 
-面向 Codex / Claude Code 的本地视频翻译与画面文字清理 Skill。当前版本 2.3.4（GPU STTN / CPU OpenCV 自动选择 + 服务端对齐）；真实外部服务验证状态见 [验收记录](docs/VALIDATION.md)。
+面向 Codex / Claude Code 的本地视频翻译与画面文字清理 Skill。当前版本 2.3.5（GPU STTN / CPU OpenCV 自动选择 + 服务端对齐）；真实外部服务验证状态见 [验收记录](docs/VALIDATION.md)。
 
 ## 功能与边界
 
@@ -21,9 +21,9 @@ Skill 通过 LZStudio CLI 提交对齐任务并轮询同一个任务 ID。n8n We
 
 ## 安装
 
-灵智工坊 Key 可本机持久保存，但启动、创建任务和转写阶段不检查也不提醒。只有转写完成、首次进入字幕清理前需要策略服务时，才检查 Key；缺失时引导用户前往 [灵智工坊官网](https://www.lingzhiai.com.cn/) 获取。用户主动在聊天里提供 `LINGZHI_API_KEY` 或 `LZSTUDIO_API_KEY` 后，Agent 通过 `credential-set --provider lingzhi --stdin --json` 的标准输入保存；`lzstudio` 是别名。两者共用一份授权，读取优先级为非空环境变量 `LINGZHI_API_KEY` → `LZSTUDIO_API_KEY` → 已保存凭据。macOS 凭据目录权限 700、文件权限 600，Windows 使用系统凭据库；不写任务文件，不随发布包迁移。后续对话、进程重启和 Skill 更新自动复用，直到明确删除或替换。`credential-status --json` 仅显示名称，`credential-delete --provider lingzhi --json` 可删除。聊天提交为可选入口，原消息可能留在历史中，意外披露应删除原消息并轮换 Key。保存不代表远端授权有效。
+灵智工坊 Key 可本机持久保存，但启动、创建任务和转写阶段不检查也不提醒。只有转写完成、首次进入字幕清理前需要策略服务时，才检查 Key；缺失时引导用户前往 [灵智工坊官网](https://www.lingzhiai.com.cn/) 获取。官网地址必须保留 `www`，不得使用无 `www` 的不可用地址。用户主动在聊天里提供 `LINGZHI_API_KEY` 或 `LZSTUDIO_API_KEY` 后，Agent 通过 `credential-set --provider lingzhi --stdin --json` 的标准输入保存；`lzstudio` 是别名。两者共用一份授权，读取优先级为非空环境变量 `LINGZHI_API_KEY` → `LZSTUDIO_API_KEY` → 已保存凭据。macOS 凭据目录权限 700、文件权限 600，Windows 使用系统凭据库；不写任务文件，不随发布包迁移。后续对话、进程重启和 Skill 更新自动复用，直到明确删除或替换。`credential-status --json` 仅显示名称，`credential-delete --provider lingzhi --json` 可删除。聊天提交为可选入口，原消息可能留在历史中，意外披露应删除原消息并轮换 Key。保存不代表远端授权有效。
 
-本 Skill 支持 LZStudio CLI 0.0.5：macOS ARM64 和 Windows x64。解析顺序为 `LZSTUDIO_CLI` 显式覆盖、已安装的平台 CLI、PATH；若均不存在，支持的平台会从 GitHub v2.3.4 Release 下载对应资产并校验固定 SHA-256。macOS Intel 未附对应二进制，应通过 `LZSTUDIO_CLI` 指定兼容版本。CLI 不含用户授权，授权可来自环境变量或已保存的本机凭据。
+本 Skill 支持 LZStudio CLI 0.0.5：macOS ARM64 和 Windows x64。解析顺序为 `LZSTUDIO_CLI` 显式覆盖、已安装的平台 CLI、PATH；若均不存在，支持的平台会从 GitHub v2.3.5 Release 下载对应资产并校验固定 SHA-256。macOS Intel 未附对应二进制，应通过 `LZSTUDIO_CLI` 指定兼容版本。CLI 不含用户授权，授权可来自环境变量或已保存的本机凭据。
 
 Python 3.10+；依赖 `rapidocr`、`onnxruntime`、OpenCV、NumPy 与 Faster Whisper。另需可用的 LZStudio CLI；可用 `LZSTUDIO_CLI` 指定 CLI 绝对路径。灵智工坊环境变量或本机持久凭据只在转写完成、首次进入 `clean` 前需要，不是安装或启动前提。系统安装 FFmpeg / ffprobe，需含 subtitles/libass、atempo、libx264、AAC。Windows CPU 默认可运行，不要求 NVIDIA GPU。Windows 推荐在本地 NTFS 工作目录运行。Rubber Band 可选，缺失时使用 atempo。
 
@@ -117,7 +117,7 @@ python -m pytest -q
 
 发布维护流程见 [RELEASE](docs/RELEASE.md)。
 
-本地清理默认 cleanup.backend=auto：验证 NVIDIA CUDA 优先，其次 Apple MPS，无可用加速设备使用 OpenCV。GPU 主机首次安装会从 GitHub v2.3.4 Release 下载固定 STTN 权重并校验 SHA-256；安装器按硬件安装可选 PyTorch，CPU-only 环境不强制安装。STTN 异常会尝试修复依赖/权重，内存不足最多两次减半分段；仍失败则整段回退 OpenCV，并记录原因。每段 300 秒超时独立于 OpenCV 总运行限制。已完成分段按输入和输出指纹复用。可设置 backend=opencv 强制原方案。
+本地清理默认 cleanup.backend=auto：验证 NVIDIA CUDA 优先，其次 Apple MPS，无可用加速设备使用 OpenCV。GPU 主机首次安装会从 GitHub v2.3.5 Release 下载固定 STTN 权重并校验 SHA-256；安装器按硬件安装可选 PyTorch，CPU-only 环境不强制安装。STTN 异常会尝试修复依赖/权重，内存不足最多两次减半分段；仍失败则整段回退 OpenCV，并记录原因。每段 300 秒超时独立于 OpenCV 总运行限制。已完成分段按输入和输出指纹复用。可设置 backend=opencv 强制原方案。
 
 
 策略更新：两个动作共用一个工作流入口；接口 schema_version 与 policy_version 分开。缓存文件为 cleanup_policy_result.json / alignment_policy_result.json；客户授权记录为 policy_consent.json。客户端不包含清理分类和主字幕带评分规则。详细恢复和一次授权流程以 SKILL.md 为准。

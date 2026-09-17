@@ -34,6 +34,15 @@ def test_release_payload_excludes_runtime_and_scan_passes():
     assert release.scan(release.ROOT)['ok']
 
 
+def test_lingzhi_key_url_keeps_required_www():
+    canonical = "https://www.lingzhiai.com.cn/"
+    unusable = "https://" + "lingzhiai.com.cn/"
+    for relative in ("SKILL.md", "README.md", "docs/PIPELINE.md"):
+        text = (release.ROOT / relative).read_text(encoding="utf-8")
+        assert canonical in text
+        assert unusable not in text
+
+
 def test_release_uses_external_platform_cli_assets():
     paths = release.payload(release.ROOT)
     assert release.ROOT / 'bin/macos/lzstudio' not in paths

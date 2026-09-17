@@ -23,7 +23,7 @@
 
 ## Agent 操作
 
-灵智工坊凭据也支持安全持久保存。启动、创建任务和转写阶段不得提醒或索取灵智 Key；转写完成、首次执行 `clean` 之前才检查 `policy_credential_available`。缺失时提示：`即将进行字幕清理，需要灵智工坊 API Key。请前往 https://www.lingzhiai.com.cn/ 获取。` 优先提供 `credential-set --provider lingzhi` 的本机隐藏输入，不默认要求把 Key 发到聊天。用户主动在聊天里提供 `LINGZHI_API_KEY` 或 `LZSTUDIO_API_KEY` 用于当前工作流时，Agent 启动 `credential-set --provider lingzhi --stdin --json`，通过标准输入发送原始 Key 和一个换行；`lzstudio` 是同义 Provider。不得把 Key 插入命令、任务文件、日志、回复或临时文件。保存到现有私有本机凭据后，只检查 Provider 名称并重跑 preflight；后续自动复用。环境变量优先于已存凭据。用户可明确请求 `credential-delete --provider lingzhi --json` 删除。聊天输入为用户主动选择，需提醒原消息可能留在聊天历史；意外披露应删除原消息并轮换 Key。
+灵智工坊凭据也支持安全持久保存。启动、创建任务和转写阶段不得提醒或索取灵智 Key；转写完成、首次执行 `clean` 之前才检查 `policy_credential_available`。缺失时提示：`即将进行字幕清理，需要灵智工坊 API Key。请前往 https://www.lingzhiai.com.cn/ 获取。` 该网址必须原样保留 `www`，不得缩写为无 `www` 的不可用地址。优先提供 `credential-set --provider lingzhi` 的本机隐藏输入，不默认要求把 Key 发到聊天。用户主动在聊天里提供 `LINGZHI_API_KEY` 或 `LZSTUDIO_API_KEY` 用于当前工作流时，Agent 启动 `credential-set --provider lingzhi --stdin --json`，通过标准输入发送原始 Key 和一个换行；`lzstudio` 是同义 Provider。不得把 Key 插入命令、任务文件、日志、回复或临时文件。保存到现有私有本机凭据后，只检查 Provider 名称并重跑 preflight；后续自动复用。环境变量优先于已存凭据。用户可明确请求 `credential-delete --provider lingzhi --json` 删除。聊天输入为用户主动选择，需提醒原消息可能留在聊天历史；意外披露应删除原消息并轮换 Key。
 
 严格按 [SKILL.md](../SKILL.md)：源语言默认使用 `auto` 且不询问用户；用户明确指定时使用其选择，仅在自动检测失败或结果不可用时询问源语言。目标语言未提供时只询问目标语言。TTS Provider 默认使用 ElevenLabs，仅在用户明确指定时改用 MiniMax；不在 ElevenLabs 失败时静默回退。默认 preflight 返回 `ELEVENLABS_CREDENTIAL_REQUIRED` 时，Agent 立即运行 `credential-setup --json`，不要求用户输入命令。浏览器向导仍是默认入口；只有用户主动选择或已经在聊天中发来 Key 时，Agent 才可用交互进程的标准输入保存，并且不得复述 Key。成功后自动重跑 preflight。翻译后只展示已选 Provider 的真实音色列表，并进行一次 Voice 选择。除此之外不设置正常暂停点。Agent 使用当前模型完成润色和目标翻译，不调用 Microsoft、其他翻译 Provider、额外 LLM API、其他 Agent、CLI 或文本生成服务；Python 只验证文件结构并提交阶段产物。
 

@@ -1,7 +1,7 @@
 ---
 name: video-translate-agent
 slug: video-translate-agent
-version: 2.3.4
+version: 2.3.5
 license: GPL-3.0-only
 displayName: 视频翻译与配音助手
 summary: 本地识别口播、清理原字幕，完成翻译、配音、音画对齐与硬字幕输出。
@@ -16,7 +16,7 @@ description: Translate and visually clean a local video with Faster Whisper, spa
 
 # Local video translation
 
-This distribution uses LZStudio CLI 0.0.5 on macOS ARM64 and Windows x64. The client uses an explicit `LZSTUDIO_CLI` override first, then a platform copy, then PATH; if none exists on a supported platform, it downloads the matching v2.3.4 GitHub Release asset and verifies its pinned SHA-256 before use. On macOS Intel, set `LZSTUDIO_CLI` to a compatible executable. Downloading the CLI does not configure authentication or authorize video uploads.
+This distribution uses LZStudio CLI 0.0.5 on macOS ARM64 and Windows x64. The client uses an explicit `LZSTUDIO_CLI` override first, then a platform copy, then PATH; if none exists on a supported platform, it downloads the matching v2.3.5 GitHub Release asset and verifies its pinned SHA-256 before use. On macOS Intel, set `LZSTUDIO_CLI` to a compatible executable. Downloading the CLI does not configure authentication or authorize video uploads.
 
 Use the absolute path to `scripts/video_translate.py` inside this skill directory. Run all commands with the same Python environment and the same `--runtime-root` if overridden. Paths resolve relative to the skill root, not the shell cwd. Read [the CLI protocol](docs/PIPELINE.md) for error and recovery details; inspect [architecture](docs/ARCHITECTURE.md) only when debugging internals.
 
@@ -50,6 +50,8 @@ Users may explicitly provide `LINGZHI_API_KEY` or `LZSTUDIO_API_KEY` in chat for
 Do not proactively mention this credential section during preflight, job creation, or transcription. After transcription reaches `TRANSCRIBED` and immediately before `clean`, inspect `policy_credential_available`. If it is false, stop before the policy request and tell the user exactly:
 
 > 即将进行字幕清理，需要灵智工坊 API Key。请前往 [https://www.lingzhiai.com.cn/](https://www.lingzhiai.com.cn/) 获取。
+
+Always preserve this exact Key-acquisition URL, including `www`: `https://www.lingzhiai.com.cn/`. Never remove the `www` host label; the shortened host is not a usable entry point.
 
 Then offer the hidden local input (`credential-set --provider lingzhi`) as the preferred save method, or explain that the user may explicitly choose chat input. Do not ask the user for the Key in chat by default. If a matching Key is already available, do not mention authorization and continue to the metadata-consent checkpoint.
 
@@ -94,7 +96,7 @@ python <skill-root>/scripts/video_translate.py clean --job <id> --json
 
 The clean command performs sparse OCR and text-track construction locally, then submits one `cleanup_policy` task to VideoTranslatePolicyV1 with OCR text, track positions/times, source segment times and video metadata. The server alone decides classification, cleanup eligibility and dominant subtitle layout. After dubbing, one separate `alignment_policy` task sends segment IDs/start times, video duration and measured TTS durations. Neither policy uploads video or audio. Do not combine the stages or wait for TTS before cleanup. Saved fingerprint-checked policy results are reused; when a task ID was saved, recovery polls that same task. Do not substitute local policy rules.
 
-- `local`: local OCR and remote cleanup decisions guide local mask construction. With cleanup.backend=auto (default), use STTN on verified CUDA first, then MPS / Apple GPU; otherwise use OpenCV. STTN runs locally with a pinned SHA-256-verified weight downloaded from the v2.3.4 GitHub release on GPU hosts, 2.5-second chunks, 432×240 inference and a 300-second timeout per chunk. Use actual video track masks and positions, never sample-specific coordinates. Cache completed chunks with input/output fingerprints. Repair missing GPU dependencies/weights locally; on out-of-memory halve chunk length, retry at most twice. If STTN remains unavailable or fails, rerun the whole cleanup with OpenCV using the same OCR analysis and explicitly report the fallback reason. cleanup.backend=opencv forces OpenCV; sttn requests GPU STTN with the same documented fallback. The installer prepares optional GPU dependencies; preflight reports availability without blocking CPU-only machines. The selected backend repairs frames, and writes `clean/video.mp4`, `overlay_analysis.json`, `subtitle_layout.json`, masks, reports, and diagnostic previews.
+- `local`: local OCR and remote cleanup decisions guide local mask construction. With cleanup.backend=auto (default), use STTN on verified CUDA first, then MPS / Apple GPU; otherwise use OpenCV. STTN runs locally with a pinned SHA-256-verified weight downloaded from the v2.3.5 GitHub release on GPU hosts, 2.5-second chunks, 432×240 inference and a 300-second timeout per chunk. Use actual video track masks and positions, never sample-specific coordinates. Cache completed chunks with input/output fingerprints. Repair missing GPU dependencies/weights locally; on out-of-memory halve chunk length, retry at most twice. If STTN remains unavailable or fails, rerun the whole cleanup with OpenCV using the same OCR analysis and explicitly report the fallback reason. cleanup.backend=opencv forces OpenCV; sttn requests GPU STTN with the same documented fallback. The installer prepares optional GPU dependencies; preflight reports availability without blocking CPU-only machines. The selected backend repairs frames, and writes `clean/video.mp4`, `overlay_analysis.json`, `subtitle_layout.json`, masks, reports, and diagnostic previews.
 
 If either cleanup/alignment policy is unavailable or returns an invalid contract, treat it as a technical failure rather than silently using local heuristics.
 
@@ -106,9 +108,13 @@ After CLEANED, read `jobs/<id>/segments_raw.json`. Using **your own current mode
 python <skill-root>/scripts/video_translate.py validate-polish --job <id> --json
 ```
 
-The polish command creates `jobs/<id>/segments_translation.json`. Using your own current model capability, translate each `polished_text` into the manifest's target language by modifying only each object's `text`. Preserve exactly `id`, `start_ms`, `end_ms`, `raw_text`, `polished_text`, field set, object count and order. Preserve brand/product identity and exact model/shade codes; localize descriptive shade names according to the guidance below. Preserve meaning and sales tone, and do not add or omit claims. Do not call Microsoft or any other translation provider, external LLM API, agent, CLI, or text-generation service. For long files, translate bounded contiguous groups and reconstruct the complete original order before validation.
+The polish command creates `jobs/<id>/segments_translation.json`. Using your own current model capability, translate each `polished_text` into the manifest's target language by modifying only each object's `text`. Preserve exactly `id`, `start_ms`, `end_ms`, `raw_text`, `polished_text`, field set, object count and order. Translate product names into the target language as well as the surrounding copy. Keep brand/trademark names, model numbers, SKUs and shade codes exact, but do not leave a generic or descriptive product name in the source language merely to preserve product identity. Use a supplied or verified official target-language product name when available; otherwise use a natural semantic translation, or a target-language transliteration only when the name is genuinely non-semantic. Do not present an inferred translation or transliteration as an official name. Localize descriptive shade names according to the guidance below. Preserve meaning and sales tone, and do not add or omit claims. Do not call Microsoft or any other translation provider, external LLM API, agent, CLI, or text-generation service. For long files, translate bounded contiguous groups and reconstruct the complete original order before validation.
 
-### Product and shade names in Japanese
+### Product and shade names
+
+- Product names are part of the required translation. Translate their generic and descriptive wording into the manifest's target language for both subtitles and TTS. Preserve only the protected identity elements listed above; shared script, familiar loanwords, or recognizability are not reasons to leave the whole product name untranslated.
+- For every target language, prefer a supplied or verified official localized product name. Without one, produce a natural target-language rendering that keeps the same product identity and product type without inventing claims.
+- For Japanese specifically, apply the additional rules below.
 
 - Distinguish brand names, model/shade codes (such as `V07`), official shade names, and descriptive color wording. Keep codes exact. Use an official Japanese name only when supported by supplied material or a verified official source; do not invent a localized official name or a brand pronunciation.
 - Shared Chinese/Japanese kanji are not evidence that a phrase has been naturally translated. For descriptive shade names without an established Japanese name, choose idiomatic Japanese wording or a suitable Japanese rendering while retaining the original identity. For example, `V07 白桃清酒` is a shade reference, not a beverage claim: simply copying `V07、白桃清酒。` is insufficient without considering whether the name needs localization. An explanatory rendering such as `V07、白桃と日本酒をイメージしたカラー。` may fit a descriptive name; if the exact official name must be retained, use `V07「白桃清酒」` and do not present the explanation as its official name. Do not force every shade name into this example's wording or add product ingredients, benefits, or color details absent from the source.

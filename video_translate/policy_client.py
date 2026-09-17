@@ -27,22 +27,22 @@ CLI_MAX_BYTES = 12 * 1024 * 1024
 CLI_ASSETS = {
     ("darwin", "arm64"): (
         "bin/macos/lzstudio",
-        "https://github.com/devmaster947-hub/video-translate-agent/releases/download/v2.3.4/lzstudio-macos-arm64",
+        "https://github.com/devmaster947-hub/video-translate-agent/releases/download/v2.3.5/lzstudio-macos-arm64",
         "7af107fa2087782763fcfb7528aa8759326c9ca4b8a04c447b42fc55528b0e7d",
     ),
     ("darwin", "aarch64"): (
         "bin/macos/lzstudio",
-        "https://github.com/devmaster947-hub/video-translate-agent/releases/download/v2.3.4/lzstudio-macos-arm64",
+        "https://github.com/devmaster947-hub/video-translate-agent/releases/download/v2.3.5/lzstudio-macos-arm64",
         "7af107fa2087782763fcfb7528aa8759326c9ca4b8a04c447b42fc55528b0e7d",
     ),
     ("windows", "amd64"): (
         "bin/windows/lzstudio.exe",
-        "https://github.com/devmaster947-hub/video-translate-agent/releases/download/v2.3.4/lzstudio-windows-x64.exe",
+        "https://github.com/devmaster947-hub/video-translate-agent/releases/download/v2.3.5/lzstudio-windows-x64.exe",
         "f1c61d3fd5ec0ee5b6a58957494ff21cf220098e4350a4c2f89081f60bf55ab0",
     ),
     ("windows", "x86_64"): (
         "bin/windows/lzstudio.exe",
-        "https://github.com/devmaster947-hub/video-translate-agent/releases/download/v2.3.4/lzstudio-windows-x64.exe",
+        "https://github.com/devmaster947-hub/video-translate-agent/releases/download/v2.3.5/lzstudio-windows-x64.exe",
         "f1c61d3fd5ec0ee5b6a58957494ff21cf220098e4350a4c2f89081f60bf55ab0",
     ),
 }
@@ -87,7 +87,7 @@ def ensure_cli() -> Path | None:
     target.parent.mkdir(parents=True, exist_ok=True)
     temporary = target.with_name(target.name + ".download")
     temporary.unlink(missing_ok=True)
-    request = urllib.request.Request(url, headers={"User-Agent": "video-translate-agent/2.3.4"})
+    request = urllib.request.Request(url, headers={"User-Agent": "video-translate-agent/2.3.5"})
     try:
         total = 0
         digest = hashlib.sha256()
