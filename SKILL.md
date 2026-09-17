@@ -1,7 +1,7 @@
 ---
 name: video-translate-agent
 slug: video-translate-agent
-version: 2.3.2
+version: 2.3.3
 displayName: 视频翻译与配音助手
 summary: 本地识别口播、清理原字幕，完成翻译、配音、音画对齐与硬字幕输出。
 tags:
@@ -15,7 +15,7 @@ description: Translate and visually clean a local video with Faster Whisper, spa
 
 # Local video translation
 
-This distribution includes LZStudio CLI 0.0.5 at `bin/macos/lzstudio` (macOS ARM64) and `bin/windows/lzstudio.exe` (Windows x64). The client uses an explicit `LZSTUDIO_CLI` override first, then the platform-bundled CLI, then PATH. On macOS Intel, set `LZSTUDIO_CLI` to a compatible executable. Bundling the CLI does not configure authentication or authorize video uploads.
+This distribution uses LZStudio CLI 0.0.5 on macOS ARM64 and Windows x64. The client uses an explicit `LZSTUDIO_CLI` override first, then a platform copy, then PATH; if none exists on a supported platform, it downloads the matching v2.3.3 GitHub Release asset and verifies its pinned SHA-256 before use. On macOS Intel, set `LZSTUDIO_CLI` to a compatible executable. Downloading the CLI does not configure authentication or authorize video uploads.
 
 Use the absolute path to `scripts/video_translate.py` inside this skill directory. Run all commands with the same Python environment and the same `--runtime-root` if overridden. Paths resolve relative to the skill root, not the shell cwd. Read [the CLI protocol](docs/PIPELINE.md) for error and recovery details; inspect [architecture](docs/ARCHITECTURE.md) only when debugging internals.
 
@@ -87,7 +87,7 @@ python <skill-root>/scripts/video_translate.py clean --job <id> --json
 
 The clean command performs sparse OCR and text-track construction locally, then submits one `cleanup_policy` task to VideoTranslatePolicyV1 with OCR text, track positions/times, source segment times and video metadata. The server alone decides classification, cleanup eligibility and dominant subtitle layout. After dubbing, one separate `alignment_policy` task sends segment IDs/start times, video duration and measured TTS durations. Neither policy uploads video or audio. Do not combine the stages or wait for TTS before cleanup. Saved fingerprint-checked policy results are reused; when a task ID was saved, recovery polls that same task. Do not substitute local policy rules.
 
-- `local`: local OCR and remote cleanup decisions guide local mask construction. With cleanup.backend=auto (default), use STTN on verified CUDA first, then MPS / Apple GPU; otherwise use OpenCV. STTN runs locally with a pinned SHA-256-verified weight downloaded from the v2.3.2 GitHub release on GPU hosts, 2.5-second chunks, 432×240 inference and a 300-second timeout per chunk. Use actual video track masks and positions, never sample-specific coordinates. Cache completed chunks with input/output fingerprints. Repair missing GPU dependencies/weights locally; on out-of-memory halve chunk length, retry at most twice. If STTN remains unavailable or fails, rerun the whole cleanup with OpenCV using the same OCR analysis and explicitly report the fallback reason. cleanup.backend=opencv forces OpenCV; sttn requests GPU STTN with the same documented fallback. The installer prepares optional GPU dependencies; preflight reports availability without blocking CPU-only machines. The selected backend repairs frames, and writes `clean/video.mp4`, `overlay_analysis.json`, `subtitle_layout.json`, masks, reports, and diagnostic previews.
+- `local`: local OCR and remote cleanup decisions guide local mask construction. With cleanup.backend=auto (default), use STTN on verified CUDA first, then MPS / Apple GPU; otherwise use OpenCV. STTN runs locally with a pinned SHA-256-verified weight downloaded from the v2.3.3 GitHub release on GPU hosts, 2.5-second chunks, 432×240 inference and a 300-second timeout per chunk. Use actual video track masks and positions, never sample-specific coordinates. Cache completed chunks with input/output fingerprints. Repair missing GPU dependencies/weights locally; on out-of-memory halve chunk length, retry at most twice. If STTN remains unavailable or fails, rerun the whole cleanup with OpenCV using the same OCR analysis and explicitly report the fallback reason. cleanup.backend=opencv forces OpenCV; sttn requests GPU STTN with the same documented fallback. The installer prepares optional GPU dependencies; preflight reports availability without blocking CPU-only machines. The selected backend repairs frames, and writes `clean/video.mp4`, `overlay_analysis.json`, `subtitle_layout.json`, masks, reports, and diagnostic previews.
 
 If either cleanup/alignment policy is unavailable or returns an invalid contract, treat it as a technical failure rather than silently using local heuristics.
 

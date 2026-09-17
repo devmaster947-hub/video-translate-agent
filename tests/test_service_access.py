@@ -1,4 +1,6 @@
 import json
+import hashlib
+import io
 import subprocess
 from pathlib import Path
 from types import SimpleNamespace as NS
@@ -6,6 +8,22 @@ from types import SimpleNamespace as NS
 import pytest
 from video_translate import policy_client as policy, cli
 from video_translate.service_access import SERVICE_ERROR, SERVICE_MESSAGE, service_blocked
+
+
+def test_cli_asset_download_is_hash_verified(monkeypatch, tmp_path):
+    payload = b"verified-cli-fixture"
+    class Response(io.BytesIO):
+        def __enter__(self): return self
+        def __exit__(self, *args): self.close()
+    monkeypatch.setattr(policy, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(policy.platform, "system", lambda: "FixtureOS")
+    monkeypatch.setattr(policy.platform, "machine", lambda: "FixtureArch")
+    monkeypatch.setattr(policy, "CLI_ASSETS", {("fixtureos", "fixturearch"):
+        ("bin/fixture/lzstudio", "https://example.invalid/lzstudio", hashlib.sha256(payload).hexdigest())})
+    monkeypatch.setattr(policy.urllib.request, "urlopen", lambda *a, **k: Response(payload))
+    result = policy.ensure_cli()
+    assert result == (tmp_path / "bin/fixture/lzstudio").resolve()
+    assert result.read_bytes() == payload
 
 @pytest.mark.parametrize('response', [
     {'error_code': 'INSUFFICIENT_CREDITS', 'balance': 0},

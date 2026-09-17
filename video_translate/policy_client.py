@@ -8,6 +8,7 @@ import platform
 import shutil
 import subprocess
 import time
+import urllib.request
 from pathlib import Path
 from typing import Callable
 
@@ -22,6 +23,29 @@ DEFAULT_WORKFLOW_ID = "VideoTranslatePolicyV1"
 TERMINAL_SUCCESS = {"succeeded", "success", "completed", "complete"}
 TERMINAL_FAILURE = {"failed", "error", "cancelled", "canceled"}
 RUNNING = {"created", "pending", "queued", "running", "processing", "inprogress", "in_progress"}
+CLI_MAX_BYTES = 12 * 1024 * 1024
+CLI_ASSETS = {
+    ("darwin", "arm64"): (
+        "bin/macos/lzstudio",
+        "https://github.com/devmaster947-hub/video-translate-agent/releases/download/v2.3.3/lzstudio-macos-arm64",
+        "7af107fa2087782763fcfb7528aa8759326c9ca4b8a04c447b42fc55528b0e7d",
+    ),
+    ("darwin", "aarch64"): (
+        "bin/macos/lzstudio",
+        "https://github.com/devmaster947-hub/video-translate-agent/releases/download/v2.3.3/lzstudio-macos-arm64",
+        "7af107fa2087782763fcfb7528aa8759326c9ca4b8a04c447b42fc55528b0e7d",
+    ),
+    ("windows", "amd64"): (
+        "bin/windows/lzstudio.exe",
+        "https://github.com/devmaster947-hub/video-translate-agent/releases/download/v2.3.3/lzstudio-windows-x64.exe",
+        "f1c61d3fd5ec0ee5b6a58957494ff21cf220098e4350a4c2f89081f60bf55ab0",
+    ),
+    ("windows", "x86_64"): (
+        "bin/windows/lzstudio.exe",
+        "https://github.com/devmaster947-hub/video-translate-agent/releases/download/v2.3.3/lzstudio-windows-x64.exe",
+        "f1c61d3fd5ec0ee5b6a58957494ff21cf220098e4350a4c2f89081f60bf55ab0",
+    ),
+}
 
 
 class PolicyError(RuntimeError):
@@ -47,6 +71,47 @@ def _candidate_binaries() -> list[Path]:
     return candidates
 
 
+def ensure_cli() -> Path | None:
+    asset = CLI_ASSETS.get((platform.system().lower(), platform.machine().lower()))
+    if asset is None:
+        return None
+    relative, url, expected_hash = asset
+    target = PROJECT_ROOT / relative
+    try:
+        if target.is_file() and hashlib.sha256(target.read_bytes()).hexdigest() == expected_hash:
+            if os.name != "nt":
+                target.chmod(0o755)
+            return target.resolve()
+    except OSError:
+        pass
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary = target.with_name(target.name + ".download")
+    temporary.unlink(missing_ok=True)
+    request = urllib.request.Request(url, headers={"User-Agent": "video-translate-agent/2.3.3"})
+    try:
+        total = 0
+        digest = hashlib.sha256()
+        with urllib.request.urlopen(request, timeout=120) as response, temporary.open("wb") as output:
+            while True:
+                chunk = response.read(1024 * 1024)
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > CLI_MAX_BYTES:
+                    raise OSError("CLI download exceeds size limit")
+                digest.update(chunk)
+                output.write(chunk)
+        if digest.hexdigest() != expected_hash:
+            raise OSError("CLI digest mismatch")
+        if os.name != "nt":
+            temporary.chmod(0o755)
+        temporary.replace(target)
+        return target.resolve()
+    except OSError:
+        temporary.unlink(missing_ok=True)
+        return None
+
+
 def find_cli() -> Path | None:
     for candidate in _candidate_binaries():
         try:
@@ -54,7 +119,7 @@ def find_cli() -> Path | None:
                 return candidate.resolve()
         except OSError:
             continue
-    return None
+    return ensure_cli()
 
 
 def _api_key() -> str:

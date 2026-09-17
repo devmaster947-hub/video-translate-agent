@@ -20,7 +20,7 @@ FORBIDDEN = {'jobs', 'output', '.venv', '__pycache__', '.pytest_cache', '.git',
 MARKERS = ('sk-', 'MINIMAX_API_KEY=', 'ELEVENLABS_API_KEY=', 'LINGZHI_API_KEY=', 'LZSTUDIO_API_KEY=', 'Authorization:', 'Bearer ')
 FAKES = {'a', 'b', 'first-secret', 'second-secret', 'sensitive-value-123',
          'never-persist-this-key', 'private-test-key', 'fixture-key', 'Bearer secret', 'secret', 'test'}
-BINARY_FILES = ('bin/macos/lzstudio', 'bin/windows/lzstudio.exe')
+BINARY_FILES = ()
 
 
 def payload(root):
@@ -88,7 +88,7 @@ def build():
     report = scan(ROOT)
     dist = ROOT / 'dist'
     dist.mkdir(exist_ok=True)
-    staging = dist / 'staging-v2.3.2-marketplace' / 'video-translate-agent'
+    staging = dist / 'staging-v2.3.3-marketplace' / 'video-translate-agent'
     # Fail instead of deleting an existing staging directory.
     staging.mkdir(parents=True, exist_ok=False)
     for source in payload(ROOT):
@@ -96,7 +96,7 @@ def build():
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, target)
     scan(staging)
-    archive = dist / 'video-translate-agent-v2.3.2-marketplace.zip'
+    archive = dist / 'video-translate-agent-v2.3.3-marketplace.zip'
     with zipfile.ZipFile(archive, 'x', zipfile.ZIP_DEFLATED) as z:
         for p in payload(staging):
             z.write(p, 'video-translate-agent/' + p.relative_to(staging).as_posix())

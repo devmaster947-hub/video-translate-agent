@@ -34,9 +34,7 @@ def test_release_payload_excludes_runtime_and_scan_passes():
     assert release.scan(release.ROOT)['ok']
 
 
-def test_release_includes_platform_cli_and_hashes():
+def test_release_uses_external_platform_cli_assets():
     paths = release.payload(release.ROOT)
-    report = release.scan(release.ROOT)
-    for name in release.BINARY_FILES:
-        assert release.ROOT / name in paths
-        assert len(report['binary_sha256'][name]) == 64
+    assert release.ROOT / 'bin/macos/lzstudio' not in paths
+    assert release.ROOT / 'bin/windows/lzstudio.exe' not in paths
