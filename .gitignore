@@ -1,0 +1,13 @@
+.DS_Store
+.env
+.venv/
+.pytest_cache/
+__pycache__/
+*.py[cod]
+jobs/
+output/
+dist/
+dist-*/
+video_translate_agent.egg-info/
+video_translate/vendor/sttn/sttn.pth
+video_translate/vendor/sttn/*.download

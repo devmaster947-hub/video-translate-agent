@@ -1,0 +1,4 @@
+interface:
+  display_name: "Video Translate Agent"
+  short_description: "Translate, dub, clean, align, and subtitle local videos"
+  default_prompt: "Use $video-translate-agent to translate this local video, remove eligible source text locally, generate target-language narration, align it, and render positioned subtitles."

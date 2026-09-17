@@ -1,0 +1,25 @@
+runtime_root: .
+media:
+  ffmpeg: ffmpeg
+  ffprobe: ffprobe
+  timeout_seconds: 300
+subtitles:
+  font_size: 22.4
+  font_scale: 1.0
+  max_width_ratio: 0.88
+  background_alpha: 176
+cleanup:
+  enabled: true
+  mode: local
+  backend: auto
+  sttn_chunk_seconds: 2.5
+  sttn_timeout_seconds: 300
+  sample_fps: 4.0
+  max_ocr_frames: 240
+  detect_subtitles: true
+  detect_watermarks: true
+  min_ocr_confidence: 0.45
+  mask_dilate_px_720p: 2
+  mask_roi_padding_px_720p: 6
+  inpaint_radius_px_720p: 3.0
+  manual_watermark_regions: []
