@@ -88,7 +88,7 @@ def build():
     report = scan(ROOT)
     dist = ROOT / 'dist'
     dist.mkdir(exist_ok=True)
-    staging = dist / 'staging-v2.3.3-marketplace' / 'video-translate-agent'
+    staging = dist / 'staging-v2.3.4-marketplace' / 'video-translate-agent'
     # Fail instead of deleting an existing staging directory.
     staging.mkdir(parents=True, exist_ok=False)
     for source in payload(ROOT):
@@ -96,7 +96,7 @@ def build():
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, target)
     scan(staging)
-    archive = dist / 'video-translate-agent-v2.3.3-marketplace.zip'
+    archive = dist / 'video-translate-agent-v2.3.4-marketplace.zip'
     with zipfile.ZipFile(archive, 'x', zipfile.ZIP_DEFLATED) as z:
         for p in payload(staging):
             z.write(p, 'video-translate-agent/' + p.relative_to(staging).as_posix())

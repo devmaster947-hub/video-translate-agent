@@ -107,10 +107,23 @@ def execute(args) -> tuple[dict, int]:
                 report["errors"].append(error)
         policy = policy_capabilities()
         report.update({key: value for key, value in policy.items() if key != "policy_errors"})
-        report["errors"].extend(policy["policy_errors"])
+        # A Lingzhi key is not needed for local setup, job creation, or
+        # transcription. Keep reporting its presence, but defer the blocking
+        # credential gate until the first policy-backed stage (`clean`).
+        deferred_policy_errors = [
+            error for error in policy["policy_errors"]
+            if error == "LINGZHI_CREDENTIAL_REQUIRED"
+        ]
+        report["errors"].extend(
+            error for error in policy["policy_errors"]
+            if error != "LINGZHI_CREDENTIAL_REQUIRED"
+        )
+        report["deferred_policy_errors"] = deferred_policy_errors
+        report["policy_credential_required_at"] = "clean"
         from .sttn import capabilities as sttn_capabilities
         report.update(sttn_capabilities())
-        report["full_pipeline_ready"]=not report["errors"]
+        report["startup_ready"] = not report["errors"]
+        report["full_pipeline_ready"] = not report["errors"] and not deferred_policy_errors
         return report, 1 if report["errors"] else 0
     if args.command == "create":
         source = anchored_path(args.input)

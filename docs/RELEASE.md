@@ -1,12 +1,12 @@
 # Windows 源码 Skill 发布
 
-版本 2.3.3 marketplace（本地媒体处理无固定总时限）。产物是完整 Skill 目录的 ZIP，不是 exe，不包含 Python、FFmpeg、OCR 或 ASR 模型。许可证和第三方声明随包保留。依赖范围由 pyproject.toml 指定；不是锁定全部传递依赖的离线安装包。STTN 权重与两个平台 LZStudio CLI 作为同版本 GitHub Release 独立资产发布，客户端按平台下载并验证固定 SHA-256。
+版本 2.3.4 marketplace（本地媒体处理无固定总时限）。产物是完整 Skill 目录的 ZIP，不是 exe，不包含 Python、FFmpeg、OCR 或 ASR 模型。许可证和第三方声明随包保留。依赖范围由 pyproject.toml 指定；不是锁定全部传递依赖的离线安装包。STTN 权重与两个平台 LZStudio CLI 作为同版本 GitHub Release 独立资产发布，客户端按平台下载并验证固定 SHA-256。
 
 ## 发布命令
 
 依次运行完整默认 pytest、Skill validator、本地 preflight、Git 状态/文件检查、`python scripts/release.py scan`。本项目不是 Git 工作目录时记录此事实，改用文件检查，不创建或提交仓库。
 
-`python scripts/release.py build` 从固定根文件和脚本/包/配置/文档/测试的文本扩展名白名单创建 `dist/staging-v2.3.3-marketplace/video-translate-agent`，随后压缩。存在 staging 或同名 ZIP 时拒绝覆盖；维护者应先检查并将旧发布归档后再重建。
+`python scripts/release.py build` 从固定根文件和脚本/包/配置/文档/测试的文本扩展名白名单创建 `dist/staging-v2.3.4-marketplace/video-translate-agent`，随后压缩。存在 staging 或同名 ZIP 时拒绝覆盖；维护者应先检查并将旧发布归档后再重建。
 
 工具再次解压并检查 CRC、路径、关键文件、禁入目录、凭据扫描和逐文件字节一致性，输出 ZIP 与 SHA-256 文件。扫描属于启发式检测，需要人工审查变量名、请求头构造和测试假数据；不读取环境变量、不输出疑似值。只扫描白名单源码，不接触真实 jobs/output。
 

@@ -9,7 +9,7 @@
 | credential-set --provider <name> --stdin | 仅在用户主动通过聊天提供 Key 时，由 Agent 经进程标准输入保存 |
 | credential-status | 只列出已配置的 Provider，不输出 Key |
 | credential-delete --provider <name> | 删除指定 Provider 的已保存凭据 |
-| preflight [--provider <name>] | 本机工具、滤镜、编码器、faster-whisper、LZStudio CLI、策略通道凭据和所选 TTS Provider Key；默认 ElevenLabs |
+| preflight [--provider <name>] | 本机工具、滤镜、编码器、faster-whisper、LZStudio CLI 和所选 TTS Provider Key；默认 ElevenLabs。灵智凭据仅报告为延后就绪信息，不阻断启动 |
 | create --input <video> [--cleanup-mode local] | 验证视频并冻结清除模式，创建 jobs/<id>/manifest.json，CREATED |
 | transcribe --job <id> --source <auto/语言> --target <语言> | 保存 LANG_CONFIRMED，提取源音轨，Faster Whisper、resegment，写 segments_raw.json，TRANSCRIBED |
 | clean --job <id> | 稀疏 OCR/Track 构建 → 服务端清理策略/字幕布局（上传OCR文字、位置和时间等元数据，不上传媒体） → local: 动态 mask → CUDA/MPS STTN（auto）或 OpenCV，写 clean/video.mp4 与布局/报告，CLEANED |
@@ -23,7 +23,7 @@
 
 ## Agent 操作
 
-灵智工坊凭据也支持安全持久保存。用户主动在聊天里提供 `LINGZHI_API_KEY` 或 `LZSTUDIO_API_KEY` 用于当前工作流时，Agent 启动 `credential-set --provider lingzhi --stdin --json`，通过标准输入发送原始 Key 和一个换行；`lzstudio` 是同义 Provider。不得把 Key 插入命令、任务文件、日志、回复或临时文件。保存到现有私有本机凭据后，只检查 Provider 名称并重跑 preflight；后续自动复用。环境变量优先于已存凭据。用户可明确请求 `credential-delete --provider lingzhi --json` 删除。聊天输入为用户主动选择，需提醒原消息可能留在聊天历史；意外披露应删除原消息并轮换 Key。
+灵智工坊凭据也支持安全持久保存。启动、创建任务和转写阶段不得提醒或索取灵智 Key；转写完成、首次执行 `clean` 之前才检查 `policy_credential_available`。缺失时提示：`即将进行字幕清理，需要灵智工坊 API Key。请前往 https://www.lingzhiai.com.cn/ 获取。` 优先提供 `credential-set --provider lingzhi` 的本机隐藏输入，不默认要求把 Key 发到聊天。用户主动在聊天里提供 `LINGZHI_API_KEY` 或 `LZSTUDIO_API_KEY` 用于当前工作流时，Agent 启动 `credential-set --provider lingzhi --stdin --json`，通过标准输入发送原始 Key 和一个换行；`lzstudio` 是同义 Provider。不得把 Key 插入命令、任务文件、日志、回复或临时文件。保存到现有私有本机凭据后，只检查 Provider 名称并重跑 preflight；后续自动复用。环境变量优先于已存凭据。用户可明确请求 `credential-delete --provider lingzhi --json` 删除。聊天输入为用户主动选择，需提醒原消息可能留在聊天历史；意外披露应删除原消息并轮换 Key。
 
 严格按 [SKILL.md](../SKILL.md)：源语言默认使用 `auto` 且不询问用户；用户明确指定时使用其选择，仅在自动检测失败或结果不可用时询问源语言。目标语言未提供时只询问目标语言。TTS Provider 默认使用 ElevenLabs，仅在用户明确指定时改用 MiniMax；不在 ElevenLabs 失败时静默回退。默认 preflight 返回 `ELEVENLABS_CREDENTIAL_REQUIRED` 时，Agent 立即运行 `credential-setup --json`，不要求用户输入命令。浏览器向导仍是默认入口；只有用户主动选择或已经在聊天中发来 Key 时，Agent 才可用交互进程的标准输入保存，并且不得复述 Key。成功后自动重跑 preflight。翻译后只展示已选 Provider 的真实音色列表，并进行一次 Voice 选择。除此之外不设置正常暂停点。Agent 使用当前模型完成润色和目标翻译，不调用 Microsoft、其他翻译 Provider、额外 LLM API、其他 Agent、CLI 或文本生成服务；Python 只验证文件结构并提交阶段产物。
 
@@ -53,7 +53,7 @@
 |---|---|
 | CREATED | 目标语言已知时以显式源语言或默认 `auto` 执行 transcribe；仅目标语言缺失时询问 |
 | LANG_CONFIRMED | 使用已保存语言 transcribe |
-| TRANSCRIBED | clean |
+| TRANSCRIBED | 首先检查延后的灵智 Key；缺失时提供官网入口，配置后确认元数据授权，再执行 clean |
 | CLEANED | Agent 自动润色并 validate-polish |
 | POLISHED | Agent 本地翻译 segments_translation.json 后 validate-translation |
 | TRANSLATED | voices |

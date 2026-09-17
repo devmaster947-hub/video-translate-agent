@@ -8,7 +8,7 @@ from .state import fingerprint
 WEIGHTS=Path(__file__).parent/"vendor/sttn/sttn.pth"
 # Frozen checkpoint. Marketplace packages fetch this release asset on GPU hosts.
 WEIGHT_HASH='25b0c2c30042d82efd1893bd42ec726764262d94115393a1718f8d65d2a7817b'
-WEIGHT_URL='https://github.com/devmaster947-hub/video-translate-agent/releases/download/v2.3.3/sttn.pth'
+WEIGHT_URL='https://github.com/devmaster947-hub/video-translate-agent/releases/download/v2.3.4/sttn.pth'
 WEIGHT_MAX_BYTES=70*1024*1024
 
 class STTNError(RuntimeError):pass
@@ -54,7 +54,7 @@ def ensure_weights():
     WEIGHTS.parent.mkdir(parents=True,exist_ok=True)
     temporary=WEIGHTS.with_suffix(".pth.download")
     temporary.unlink(missing_ok=True)
-    request=urllib.request.Request(WEIGHT_URL,headers={"User-Agent":"video-translate-agent/2.3.3"})
+    request=urllib.request.Request(WEIGHT_URL,headers={"User-Agent":"video-translate-agent/2.3.4"})
     try:
         total=0
         with urllib.request.urlopen(request,timeout=120) as response,temporary.open("wb") as target:
